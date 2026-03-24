@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 import study.querydsl.entity.Member;
 import study.querydsl.entity.QMember;
+import study.querydsl.entity.QTeam;
 import study.querydsl.entity.Team;
 
 import java.util.List;
@@ -52,7 +53,7 @@ public class QuerydslBasicTest {
         //member1을 찾아라
         String qlString =
                 "select m from Member m " +
-                "where m.username = :username";
+                        "where m.username = :username";
 
         Member findMember = em.createQuery(qlString, Member.class)
                 .setParameter("username", "member1")
@@ -128,7 +129,7 @@ public class QuerydslBasicTest {
      * 회원 정렬 순서
      * 1. 회원 나이 내림차순(desc)
      * 2. 회원 나이 올림차순(asc)
-     *  단 2에서 회원 이름이 없으면 마지막에 출력(nulls last)
+     * 단 2에서 회원 이름이 없으면 마지막에 출력(nulls last)
      */
     @Test
     public void sort() {
@@ -178,16 +179,16 @@ public class QuerydslBasicTest {
     }
 
     /*
-    * JPQL
-    *   COUNT(m),   //회원수
-    *   SUM(m.age), //나이 합
-    *   AVG(m.age), //평균 나이
-    *   MAX(m.age), //최대 나이
-    *   MIN(m.age)  //최소 나이
-    * from Member m
-    * */
+     * JPQL
+     *   COUNT(m),   //회원수
+     *   SUM(m.age), //나이 합
+     *   AVG(m.age), //평균 나이
+     *   MAX(m.age), //최대 나이
+     *   MIN(m.age)  //최소 나이
+     * from Member m
+     * */
     @Test
-    public void aggregation() throws  Exception {
+    public void aggregation() throws Exception {
         List<Tuple> result = queryFactory
                 .select(member.count(),
                         member.age.sum(),
@@ -206,8 +207,8 @@ public class QuerydslBasicTest {
     }
 
     /*
-    * 팀의 이름과 각 팀의 평균 연령을 구해라
-    * */
+     * 팀의 이름과 각 팀의 평균 연령을 구해라
+     * */
     @Test
     public void group() throws Exception {
         List<Tuple> result = queryFactory
@@ -225,5 +226,43 @@ public class QuerydslBasicTest {
 
         assertThat(teamB.get(team.name)).isEqualTo("teamB");
         assertThat(teamB.get(member.age.avg())).isEqualTo(35);
+    }
+
+    /**
+     * 팀 A에 소속된 모든 회원
+     */
+    @Test
+    public void join() throws Exception {
+        QMember member = QMember.member;
+        QTeam team = QTeam.team;
+
+        List<Member> result = queryFactory
+                .selectFrom(member)
+                .join(member.team, team)
+                .where(team.name.eq("teamA"))
+                .fetch();
+
+        assertThat(result).extracting("username")
+                .containsExactly("member1", "member2");
+    }
+
+    /*
+     * 세타 조인 (연관관계가 없는 필드로 조인)
+     * 회원의 이름이 팀 이름과 같은 회원 조회
+     * */
+
+    @Test
+    public void theta_join() throws Exception {
+        em.persist(new Member("teamA"));
+        em.persist(new Member("teamB"));
+
+        List<Member> result = queryFactory
+                .select(member)
+                .from(member, team)
+                .where(member.username.eq(team.name))
+                .fetch();
+
+        assertThat(result).extracting("username")
+                .containsExactly("teamA", "teamB");
     }
 }
