@@ -96,7 +96,7 @@ public class MemberRepositoryImpl extends QuerydslRepositorySupport implements M
         return new PageImpl<>(content, pageable, total);
     }
 
-    public Page<MemberTeamDto> searchPageSimple2(MemberSearchCondition condition, Pageable pageable) {
+/*    public Page<MemberTeamDto> searchPageSimple2(MemberSearchCondition condition, Pageable pageable) {
         JPQLQuery<MemberTeamDto> jpaQuery = from(member)
                 .leftJoin(member.team, team)
                 .where(usernameEq(condition.getUsername()),
@@ -114,6 +114,7 @@ public class MemberRepositoryImpl extends QuerydslRepositorySupport implements M
         List<MemberTeamDto> fetch = query.fetch();
 
     }
+     */
 
     /*
     * 복잡한 페이징
